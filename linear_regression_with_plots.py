@@ -15,10 +15,16 @@ def generate_random_coefficients():
 
 
 def generate_random_data(theta_0, theta_1):
-    X = np.random.normal(size=(M, 1)) * 5  # low=-50, high=50,
+    X = np.random.uniform(low=-10, high=10, size=(M, 1))  # low=-50, high=50,
     Y = theta_1 * X + theta_0 + np.random.normal(size=(M, 1)) * 5
 
     return X, Y
+
+def normalize_data_points(X):
+    X = X - X.mean()
+    X = X / X.std()
+
+    return X
 
 
 def plot_data(X, Y, ax):
@@ -86,7 +92,7 @@ def step(theta_0, theta_1, X, Y, learning_rate):
     return theta[0], theta[1]
 
 
-def train(X, Y, learning_rate=0.01, steps=100):
+def train(X, Y, learning_rate=0.05, steps=100):
     theta_0, theta_1 = 5., 5.
 
     theta_0_history = [theta_0]
@@ -104,8 +110,11 @@ def train(X, Y, learning_rate=0.01, steps=100):
 
     return theta_0, theta_1, loss_history, theta_0_history, theta_1_history
 
+def plot_loss_value(ax, loss_history):
+    ax.plot(loss_history, color='black')
 
-def generate_animation_function(ax1, ax2, ax3, loss_history, theta_0_history, theta_1_history, X, Y, true_theta_0, true_theta_1):
+
+def generate_animation_function(ax1, ax2, ax3, ax4, loss_history, theta_0_history, theta_1_history, X, Y, true_theta_0, true_theta_1):
     loss_history_cache = []
     theta_0_history_cache = []
     theta_1_history_cache = []
@@ -128,6 +137,7 @@ def generate_animation_function(ax1, ax2, ax3, loss_history, theta_0_history, th
                           theta_1_history_cache, theta_0_history_cache)
         plot_loss_function_contour_history(
             ax3, theta_0_history_cache, theta_1_history_cache)
+        plot_loss_value(ax4, loss_history_cache)
 
     return animate
 
@@ -138,19 +148,15 @@ def plot(X, Y, theta_1, theta_0):
     fig.set_figwidth(6)
 
     ax1 = plt.subplot2grid(shape=(3, 3), loc=(0, 0))
-    ax2 = plt.subplot2grid(shape=(3, 3), loc=(
-        0, 1), projection='3d', colspan=4, rowspan=4)
-    ax3 = plt.subplot2grid(shape=(3, 3), loc=(2, 0))
-
-    ax1.set_title('Data Points')
-    ax2.set_title('Loss Function')
-    ax3.set_title('Loss Function Contours')
+    ax2 = plt.subplot2grid(shape=(3, 3), loc=(0, 1), projection='3d', colspan=4, rowspan=4)
+    ax3 = plt.subplot2grid(shape=(3, 3), loc=(1, 0))
+    ax4 = plt.subplot2grid(shape=(3, 3), loc=(2, 0))
 
     plot_data(X, Y, ax1)
     plot_loss_function(X, Y, ax2)
     plot_loss_function_contour(X, Y, ax3)
 
-    return fig, ax1, ax2, ax3
+    return fig, ax1, ax2, ax3, ax4
 
 
 def plot_loss_history(ax, loss_history, theta_0_history, theta_1_history):
@@ -168,15 +174,16 @@ def plot_line(ax, theta_1, theta_0, color, label, x_start, x_end):
     ax.plot(x, y, color=color, label=label)
 
 
-def main(steps=500):
+def main(steps=100):
     theta_0, theta_1 = generate_random_coefficients()
     X, Y = generate_random_data(theta_0, theta_1)
+    # X = normalize_data_points(X)
     theta_0_hat, theta_1_hat, loss_history, theta_0_history, theta_1_history = train(
         X, Y, learning_rate=0.01, steps=steps)
 
-    fig, ax1, ax2, ax3 = plot(X, Y, theta_0, theta_1)
+    fig, ax1, ax2, ax3, ax4 = plot(X, Y, theta_0, theta_1)
     animation_function = generate_animation_function(
-        ax1, ax2, ax3, loss_history, theta_0_history, theta_1_history, X, Y, theta_0, theta_1)
+        ax1, ax2, ax3, ax4, loss_history, theta_0_history, theta_1_history, X, Y, theta_0, theta_1)
     ani = FuncAnimation(fig, animation_function, frames=20,
                         interval=steps, repeat=False)
 
@@ -184,6 +191,8 @@ def main(steps=500):
 
     print(f'True values: {theta_0}, {theta_1}')
     print(f'Predicted values: {theta_0_hat}, {theta_1_hat}')
+    print(f'Error of true parameters: { J([theta_0], [theta_1], X, Y)[0]}')
+    print(f'Error of estimated parameters: { J([theta_0_hat], [theta_1_hat], X, Y)[0]}')
 
 
 if __name__ == '__main__':
